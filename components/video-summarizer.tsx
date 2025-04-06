@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +12,7 @@ import { Loader2, Clock, Scissors, Play } from "lucide-react"
 import { extractVideoId } from "@/lib/youtube-utils"
 import VideoPlayer from "@/components/video-player"
 import SummarizedVideo from "@/components/summarized-video"
+import { downloadYouTubeVideo } from "@/app/actions/video"
 
 export default function VideoSummarizer() {
   const [url, setUrl] = useState("")
@@ -38,15 +38,23 @@ export default function VideoSummarizer() {
       setIsProcessing(true)
       setActiveTab("processing")
 
-      // Simulate AI processing time
+      // Download the video first
+      const downloadResult = await downloadYouTubeVideo(id)
+      if (!downloadResult.success) {
+        throw new Error(downloadResult.error || 'Failed to download video')
+      }
+
+      console.log(`Key Segments: ${downloadResult.filePath}`)
+
+      // Then process the summarization
       await processSummarization(id, duration)
 
       setIsProcessing(false)
       setIsComplete(true)
       setActiveTab("result")
     } catch (err) {
-      console.log(`err: ${err}`);
-      setError("An error occurred while processing the video.")
+      console.error(`Error:`, err)
+      setError(err instanceof Error ? err.message : "An error occurred while processing the video.")
       setIsProcessing(false)
     }
   }
@@ -54,8 +62,8 @@ export default function VideoSummarizer() {
   // Simulate AI processing with a delay
   const processSummarization = async (videoId: string, targetDuration: number) => {
     // In a real app, this would call a server action or API endpoint that processes the video with AI
-    console.log(`videoId: ${videoId}`);
-    console.log(`targetDuration: ${targetDuration}`);
+    console.log(`videoId: ${videoId}`)
+    console.log(`targetDuration: ${targetDuration}`)
     return new Promise((resolve) => {
       // Simulate processing time (3-5 seconds)
       const processingTime = 3000 + Math.random() * 2000
