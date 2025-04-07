@@ -1,4 +1,4 @@
-export interface VideoDownloadResult {
+export interface ProcessVideoResult {
   success: boolean;
   filePath?: string;
   error?: string;

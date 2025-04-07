@@ -12,11 +12,11 @@ import { Loader2, Clock, Scissors, Play } from "lucide-react"
 import { extractVideoId } from "@/lib/youtube-utils"
 import VideoPlayer from "@/components/video-player"
 import SummarizedVideo from "@/components/summarized-video"
-import { downloadYouTubeVideo } from "@/app/actions/video"
+import { processYouTubeVideo } from "@/app/actions/video"
 
 export default function VideoSummarizer() {
   const [url, setUrl] = useState("")
-  const [duration, setDuration] = useState(2)
+  const [desiredDuration, setDesiredDuration] = useState(2)
   const [videoId, setVideoId] = useState("")
   const [error, setError] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -38,16 +38,16 @@ export default function VideoSummarizer() {
       setIsProcessing(true)
       setActiveTab("processing")
 
-      // Download the video first
-      const downloadResult = await downloadYouTubeVideo(id)
-      if (!downloadResult.success) {
-        throw new Error(downloadResult.error || 'Failed to download video')
+      // Process the video first
+      const processResult = await processYouTubeVideo(id, desiredDuration)
+      if (!processResult.success) {
+        throw new Error(processResult.error || 'Failed to download video')
       }
 
-      console.log(`Key Segments: ${downloadResult.filePath}`)
+      console.log(`Key Segments: ${processResult.filePath}`)
 
       // Then process the summarization
-      await processSummarization(id, duration)
+      await processSummarization(id, desiredDuration)
 
       setIsProcessing(false)
       setIsComplete(true)
@@ -73,7 +73,7 @@ export default function VideoSummarizer() {
 
   const resetForm = () => {
     setUrl("")
-    setDuration(2)
+    setDesiredDuration(2)
     setVideoId("")
     setIsComplete(false)
     setActiveTab("input")
@@ -110,15 +110,15 @@ export default function VideoSummarizer() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <Label htmlFor="duration">Target Duration (minutes)</Label>
-              <span className="text-sm font-medium">{duration} min</span>
+              <span className="text-sm font-medium">{desiredDuration} min</span>
             </div>
             <Slider
               id="duration"
               min={1}
               max={10}
               step={1}
-              value={[duration]}
-              onValueChange={(value) => setDuration(value[0])}
+              value={[desiredDuration]}
+              onValueChange={(value) => setDesiredDuration(value[0])}
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>1 min</span>
@@ -194,7 +194,7 @@ export default function VideoSummarizer() {
       <TabsContent value="result" className="py-6">
         {isComplete && (
           <div className="space-y-8">
-            <SummarizedVideo videoId={videoId} targetDuration={duration} />
+            <SummarizedVideo videoId={videoId} targetDuration={desiredDuration} />
 
             <div className="space-y-4">
               <h3 className="text-xl font-medium">AI Summary Explanation</h3>
